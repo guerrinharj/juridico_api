@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import ProtocoloInputSerializer
 
-openai.api_key = 'SUA_CHAVE_DA_OPENAI'
+openai.api_key = ENV['OPEN_AI_KEY']
 
 class GerarProtocoloView(APIView):
     def post(self, request):

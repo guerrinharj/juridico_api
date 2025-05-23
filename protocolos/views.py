@@ -1,12 +1,19 @@
 from django.shortcuts import render
-
-# protocolos/views.py
-import openai
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import ProtocoloInputSerializer
 
-openai.api_key = ENV['OPEN_AI_KEY']
+from dotenv import load_dotenv
+from openai import OpenAI
+from rest_framework import status
+from openai import OpenAIError
+import os
+
+# Carrega variáveis de ambiente do .env
+load_dotenv()
+
+# Instancia o client da OpenAI com a chave
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 class GerarProtocoloView(APIView):
     def post(self, request):
@@ -27,10 +34,17 @@ Crie um protocolo jurídico de ação de exoneração de pensão alimentícia co
 Formate como uma petição inicial jurídica completa.
 """
 
-        completion = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[{"role": "user", "content": prompt}]
-        )
+        try:
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",  # use o modelo ao qual você tem acesso
+                messages=[{"role": "user", "content": prompt}]
+            )
+            return Response({
+                "protocolo_formatado": response.choices[0].message.content
+            })
 
-        return Response({"protocolo_formatado": completion.choices[0].message.content})
-
+        except OpenAIError as e:
+            return Response({
+                "erro": "Erro ao gerar protocolo com a OpenAI.",
+                "detalhes": str(e)
+            }, status=status.HTTP_429_TOO_MANY_REQUESTS)
